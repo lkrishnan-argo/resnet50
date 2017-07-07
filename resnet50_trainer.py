@@ -150,7 +150,7 @@ def RunEpoch(
     assert loss < 40, "Exploded gradients :("
 
     # TODO: add checkpointing
-    return epoch + 1
+    return epoch + 1, test_accuracy
 
 
 def Train(args):
@@ -324,7 +324,7 @@ def Train(args):
     # Run the training one epoch a time
     epoch = 0
     while epoch < args.num_epochs:
-        epoch = RunEpoch(
+        epoch, test_accuracy = RunEpoch(
             args,
             epoch,
             train_model,
@@ -336,7 +336,7 @@ def Train(args):
         )
 
         # send metric
-        accuracy_channel.send(epoch, 98.9)
+        accuracy_channel.send(epoch, test_accuracy)
         job.progress(epoch, total=args.num_epochs)
 
     # TODO: save final model.
@@ -365,9 +365,9 @@ def main():
                         help="Number of labels")
     parser.add_argument("--batch_size", type=int, default=32,
                         help="Batch size, total over all GPUs")
-    parser.add_argument("--epoch_size", type=int, default=1500000,
+    parser.add_argument("--epoch_size", type=int, default=60000,
                         help="Number of images/epoch, total over all machines")
-    parser.add_argument("--num_epochs", type=int, default=1000,
+    parser.add_argument("--num_epochs", type=int, default=10,
                         help="Num epochs.")
     parser.add_argument("--base_learning_rate", type=float, default=0.1,
                         help="Initial learning rate.")
