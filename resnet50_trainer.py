@@ -1,4 +1,4 @@
-## @package resnet50_trainer
+# @package resnet50_trainer
 # Module caffe2.python.examples.resnet50_trainer
 from __future__ import absolute_import
 from __future__ import division
@@ -14,6 +14,9 @@ from caffe2.python import core, workspace, experiment_util, data_parallel_model,
 from caffe2.python import timeout_guard, cnn
 
 import caffe2.python.models.resnet as resnet
+import aetros.backend
+
+job = aetros.backend.start_job('lkrishnan-argo/resnet50')
 
 '''
 Parallelized multi-GPU distributed trainer for Resnet 50. Can be used to train
@@ -39,6 +42,7 @@ log.setLevel(logging.DEBUG)
 
 dyndep.InitOpsLibrary('@/caffe2/caffe2/distributed:file_store_handler_ops')
 dyndep.InitOpsLibrary('@/caffe2/caffe2/distributed:redis_store_handler_ops')
+
 
 def AddImageInput(model, reader, batch_size, img_size):
     '''
@@ -214,7 +218,6 @@ def Train(args):
     else:
         rendezvous = None
 
-
     # Model building functions
     def create_resnet50_model_ops(model, loss_scale):
         [softmax, loss] = resnet.create_resnet50(
@@ -237,7 +240,7 @@ def Train(args):
         LR = model.net.LearningRate(
             [ITER],
             "LR",
-            base_lr=args.base_learning_rate,
+            base_lr=float(job.get_parameter('sampling_rate')),
             policy="step",
             stepsize=stepsz,
             gamma=0.1,
@@ -332,6 +335,10 @@ def Train(args):
             explog
         )
 
+        # send metric
+        accuracy_channel.send(epoch, 98.9)
+        job.progress(epoch, total=args.num_epochs)
+
     # TODO: save final model.
 
 
@@ -340,10 +347,9 @@ def main():
     parser = argparse.ArgumentParser(
         description="Caffe2: Resnet-50 training"
     )
-    parser.add_argument("--train_data", type=str, default=None,
-                        help="Path to training data or 'everstore_sampler'",
-                        required=True)
-    parser.add_argument("--test_data", type=str, default=None,
+    parser.add_argument("--train_data", type=str, default='/home/ubuntu/data/mnist/mnist-train-nchw-lmdb/',
+                        help="Path to training data or 'everstore_sampler'")
+    parser.add_argument("--test_data", type=str, default'/home/ubuntu/data/mnist/mnist-test-nchw-lmdb/',
                         help="Path to test data")
     parser.add_argument("--db_type", type=str, default="lmdb",
                         help="Database type (such as lmdb or leveldb)")
@@ -387,4 +393,6 @@ def main():
 
 if __name__ == '__main__':
     workspace.GlobalInit(['caffe2', '--caffe2_log_level=2'])
+    accuracy_channel = job.create_channel('accuracy', kpi=True, main=True, yaxis={'dtick': 10})
     main()
+    job.end()
