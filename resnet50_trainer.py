@@ -240,7 +240,7 @@ def Train(args):
         LR = model.net.LearningRate(
             [ITER],
             "LR",
-            base_lr=float(job.get_parameter('sampling_rate')),
+            base_lr=float(job.get_parameter('base_learning_rate')),
             policy="step",
             stepsize=stepsz,
             gamma=0.1,
