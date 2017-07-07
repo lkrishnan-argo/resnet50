@@ -349,7 +349,7 @@ def main():
     )
     parser.add_argument("--train_data", type=str, default='/home/ubuntu/data/mnist/mnist-train-nchw-lmdb/',
                         help="Path to training data or 'everstore_sampler'")
-    parser.add_argument("--test_data", type=str, default'/home/ubuntu/data/mnist/mnist-test-nchw-lmdb/',
+    parser.add_argument("--test_data", type=str, default='/home/ubuntu/data/mnist/mnist-test-nchw-lmdb/',
                         help="Path to test data")
     parser.add_argument("--db_type", type=str, default="lmdb",
                         help="Database type (such as lmdb or leveldb)")
