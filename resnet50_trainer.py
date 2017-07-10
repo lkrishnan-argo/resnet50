@@ -359,15 +359,15 @@ def main():
                         help="Number of GPU devices (instead of --gpus)")
     parser.add_argument("--num_channels", type=int, default=3,
                         help="Number of color channels")
-    parser.add_argument("--image_size", type=int, default=227,
+    parser.add_argument("--image_size", type=int, default=27,
                         help="Input image size (to crop to)")
-    parser.add_argument("--num_labels", type=int, default=1000,
+    parser.add_argument("--num_labels", type=int, default=10,
                         help="Number of labels")
     parser.add_argument("--batch_size", type=int, default=32,
                         help="Batch size, total over all GPUs")
     parser.add_argument("--epoch_size", type=int, default=60000,
                         help="Number of images/epoch, total over all machines")
-    parser.add_argument("--num_epochs", type=int, default=10,
+    parser.add_argument("--num_epochs", type=int, default=2,
                         help="Num epochs.")
     parser.add_argument("--base_learning_rate", type=float, default=0.1,
                         help="Initial learning rate.")
