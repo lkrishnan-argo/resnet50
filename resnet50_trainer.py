@@ -367,7 +367,7 @@ def main():
                         help="Batch size, total over all GPUs")
     parser.add_argument("--epoch_size", type=int, default=60000,
                         help="Number of images/epoch, total over all machines")
-    parser.add_argument("--num_epochs", type=int, default=2,
+    parser.add_argument("--num_epochs", type=int, default=1,
                         help="Num epochs.")
     parser.add_argument("--base_learning_rate", type=float, default=0.1,
                         help="Initial learning rate.")
@@ -395,4 +395,4 @@ if __name__ == '__main__':
     workspace.GlobalInit(['caffe2', '--caffe2_log_level=2'])
     accuracy_channel = job.create_channel('accuracy', kpi=True, main=True, yaxis={'dtick': 10})
     main()
-    job.end()
+    job.done()
