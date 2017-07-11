@@ -155,70 +155,70 @@ def RunEpoch(
     return epoch + 1, test_accuracy
 
     def Train(args):
-	    # Either use specified device list or generate one
-	    if args.gpus is not None:
-	        gpus = [int(x) for x in args.gpus.split(',')]
-	        num_gpus = len(gpus)
-	    else:
-	        gpus = range(args.num_gpus)
-	        num_gpus = args.num_gpus
+        # Either use specified device list or generate one
+        if args.gpus is not None:
+            gpus = [int(x) for x in args.gpus.split(',')]
+            num_gpus = len(gpus)
+        else:
+            gpus = range(args.num_gpus)
+            num_gpus = args.num_gpus
 
-	    log.info("Running on GPUs: {}".format(gpus))
+        log.info("Running on GPUs: {}".format(gpus))
 
-	    # Verify valid batch size
-	    total_batch_size = args.batch_size
-	    batch_per_device = total_batch_size // num_gpus
-	    assert \
-	        total_batch_size % num_gpus == 0, \
-	        "Number of GPUs must divide batch size"
+        # Verify valid batch size
+        total_batch_size = args.batch_size
+        batch_per_device = total_batch_size // num_gpus
+        assert \
+            total_batch_size % num_gpus == 0, \
+            "Number of GPUs must divide batch size"
 
-	    # Round down epoch size to closest multiple of batch size across machines
-	    global_batch_size = total_batch_size * args.num_shards
-	    epoch_iters = int(args.epoch_size / global_batch_size)
-	    args.epoch_size = epoch_iters * global_batch_size
-	    log.info("Using epoch size: {}".format(args.epoch_size))
+        # Round down epoch size to closest multiple of batch size across machines
+        global_batch_size = total_batch_size * args.num_shards
+        epoch_iters = int(args.epoch_size / global_batch_size)
+        args.epoch_size = epoch_iters * global_batch_size
+        log.info("Using epoch size: {}".format(args.epoch_size))
 
-	    # Create CNNModeLhelper object
-	    train_model = cnn.CNNModelHelper(
-	        order="NCHW",
-	        name="lenet",
-	        use_cudnn=True,
-	        cudnn_exhaustive_search=True,
-	        ws_nbytes_limit=(args.cudnn_workspace_limit_mb * 1024 * 1024),
-	    )
+        # Create CNNModeLhelper object
+        train_model = cnn.CNNModelHelper(
+            order="NCHW",
+            name="lenet",
+            use_cudnn=True,
+            cudnn_exhaustive_search=True,
+            ws_nbytes_limit=(args.cudnn_workspace_limit_mb * 1024 * 1024),
+        )
 
-	    num_shards = args.num_shards
-	    shard_id = args.shard_id
-	    if num_shards > 1:
-	        # Create rendezvous for distributed computation
-	        store_handler = "store_handler"
-	        if args.redis_host is not None:
-	            # Use Redis for rendezvous if Redis host is specified
-	            workspace.RunOperatorOnce(
-	                core.CreateOperator(
-	                    "RedisStoreHandlerCreate", [], [store_handler],
-	                    host=args.redis_host,
-	                    port=args.redis_port,
-	                    prefix=args.run_id,
-	                )
-	            )
-	        else:
-	            # Use filesystem for rendezvous otherwise
-	            workspace.RunOperatorOnce(
-	                core.CreateOperator(
-	                    "FileStoreHandlerCreate", [], [store_handler],
-	                    path=args.file_store_path,
-	                )
-	            )
-	        rendezvous = dict(
-	            kv_handler=store_handler,
-	            shard_id=shard_id,
-	            num_shards=num_shards,
-	            engine="GLOO",
-	            exit_nets=None)
-	    else:
-	        rendezvous = None
-	    # Model building functions
+        num_shards = args.num_shards
+        shard_id = args.shard_id
+        if num_shards > 1:
+            # Create rendezvous for distributed computation
+            store_handler = "store_handler"
+            if args.redis_host is not None:
+                # Use Redis for rendezvous if Redis host is specified
+                workspace.RunOperatorOnce(
+                    core.CreateOperator(
+                        "RedisStoreHandlerCreate", [], [store_handler],
+                        host=args.redis_host,
+                        port=args.redis_port,
+                        prefix=args.run_id,
+                    )
+                )
+            else:
+                # Use filesystem for rendezvous otherwise
+                workspace.RunOperatorOnce(
+                    core.CreateOperator(
+                        "FileStoreHandlerCreate", [], [store_handler],
+                        path=args.file_store_path,
+                    )
+                )
+            rendezvous = dict(
+                kv_handler=store_handler,
+                shard_id=shard_id,
+                num_shards=num_shards,
+                engine="GLOO",
+                exit_nets=None)
+        else:
+            rendezvous = None
+        # Model building functions
     def create_lenet_model_ops(model, loss_scale):
         [softmax, loss] = AddLeNetModel(model, data)
         # loss = model.Scale(loss, scale=loss_scale)
