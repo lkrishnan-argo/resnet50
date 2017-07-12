@@ -144,7 +144,7 @@ for i in range(total_iters):
     loss[i] = workspace.FetchBlob('loss')
     if i%20 == 0:
     	print('iter {}: Loss={:.2}'.format(i, loss[i]))
-    	accuracy_channel.send(epoch, test_accuracy)
+    	accuracy_channel.send(i, accuracy[i])
     job.progress(i, total=total_iters)
 # run a test pass on the test net
 workspace.RunNetOnce(test_model.param_init_net)
